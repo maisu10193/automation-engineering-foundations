@@ -1,0 +1,147 @@
+# Day 05 – Error Handling and Status Codes
+
+## What I studied
+
+Today I studied HTTP status codes and error handling using:
+- "HTTP Status Codes explained in 5 minutes" by Web Dev Simplified (https://www.youtube.com/watch?v=wJa5CTIFj7U)
+- MDN HTTP Status Codes reference (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+
+---
+
+## What I learned (theory)
+
+### Status code categories
+
+| Range | Category | Meaning | Who's at fault |
+|-------|----------|---------|----------------|
+| 2xx | Success | Request worked | Nobody |
+| 4xx | Client error | You sent something wrong | Client |
+| 5xx | Server error | The server broke | Server |
+
+### Key status codes to remember
+
+| Code | Meaning | Common fix |
+|------|---------|------------|
+| 200 | OK — request successful | — |
+| 201 | Created — new resource created | — |
+| 400 | Bad request — malformed data | Check your JSON/data |
+| 401 | Unauthorized — authentication failed | Fix API key or credentials |
+| 403 | Forbidden — authenticated but not allowed | Check permissions |
+| 404 | Not found — resource doesn't exist | Check URL or ID exists |
+| 429 | Too many requests — rate limited | Slow down, add delays |
+| 500 | Internal server error | Wait or contact support |
+| 503 | Service unavailable — server overloaded | Wait and retry |
+
+### 404 vs 403 — important distinction
+
+- **404 Not Found** = The resource doesn't exist at this URL. Client asked for something that isn't there.
+- **403 Forbidden** = The resource exists but you're not allowed to access it. Authentication worked but permissions failed.
+
+---
+
+## Exercise – Match the status code
+
+| Situation | Status code |
+|-----------|-------------|
+| Successfully created a new deal via `POST /deals` | 201 |
+| Requested `GET /deals/999` but that deal doesn't exist | 404 |
+| Sent a request but forgot to include the API key | 401 |
+| The API is temporarily overloaded and can't respond | 503 |
+| Sent JSON with a missing required field | 400 |
+| Requested `GET /deals` and received the list successfully | 200 |
+
+---
+
+## Exercise – Read the error
+
+Error response:
+```
+HTTP/1.1 401 Unauthorized
+
+{
+  "error": "Invalid API key",
+  "message": "The API key provided is expired or incorrect",
+  "code": "AUTH_FAILED"
+}
+```
+
+Analysis:
+- **What does 401 mean?** Authentication failed — I need to prove my identity
+- **Client or server error?** Client error (4xx range)
+- **How to fix?** Check if the API key is correct (no typos, no extra spaces). Check if it expired and generate a new one. Verify using the right key (test vs production).
+
+---
+
+## Exercise – Debug the automation
+
+Error response:
+```
+HTTP/1.1 429 Too Many Requests
+
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 3600
+}
+```
+
+Analysis:
+- **What does 429 mean?** Too many requests — I've hit the API's rate limit
+- **What does retry_after: 3600 mean?** Wait 3600 seconds (= 60 minutes = 1 hour) before trying again
+- **How to fix?**
+  1. Add a delay between requests in the workflow
+  2. Reduce how often the workflow runs
+  3. Request a higher rate limit from the API provider
+  4. Cache data locally to reduce API calls
+
+**Note:** `retry_after` is typically in seconds, not minutes. Always check the API documentation.
+
+---
+
+## Reflection
+
+**Why is 404 a client error and not a server error?**
+The client asked for something that doesn't exist. The server is working fine — it just can't find what was requested. The mistake is in the URL or ID the client provided.
+
+**What's the difference between 400 and 500?**
+- 400 = The client sent bad data (malformed JSON, missing fields). Client's fault.
+- 500 = The server encountered an internal error. Server's fault.
+
+**Why do status codes matter for automation?**
+When automations fail, status codes tell me exactly what went wrong and who's responsible:
+- 4xx = I need to fix my request (data, auth, URL)
+- 5xx = The API is broken, I need to wait or retry
+
+Without understanding status codes, I'd be debugging blind.
+
+---
+
+## Key insight for automation
+
+Robust automations need error handling:
+
+1. **Don't assume success** — Always check the status code
+2. **Handle retries carefully** — 429 means slow down, 503 means wait and retry
+3. **Log errors** — Store the status code and error message for debugging
+4. **Different errors need different fixes:**
+   - 401/403 → Check credentials/permissions
+   - 404 → Check if the resource exists
+   - 429 → Add delays, reduce frequency
+   - 500/503 → Retry later, not your fault
+
+The difference between a fragile automation and a robust one is how it handles errors.
+
+---
+
+## Week 1 Complete ✓
+
+### What I learned this week:
+
+| Day | Topic | Key takeaway |
+|-----|-------|--------------|
+| 1 | What is a backend | Backend = logic, rules, decision-making |
+| 2 | HTTP requests & responses | Client → request → backend → response → client |
+| 3 | APIs and endpoints | API = whole system, endpoint = one door (method + path) |
+| 4 | JSON and data | Structured data format, transformation between systems |
+| 5 | Error handling | Status codes tell you what went wrong and who's responsible |
+
+These fundamentals apply every time I build an automation, connect an API, or debug a failing workflow.
